@@ -238,6 +238,33 @@ const ALL_SPOTS=Object.values(SPOTS).flat();
 let visited={},wishlist={},memos={};
 let view="map",currentPref=null,currentSpot=null,currentTab="spots";
 
+// =============================
+// ★ ここにAPIキーを貼り付けてください
+const UNSPLASH_KEY = "n-JZTXlugcKJN_aAh6abtUt5XpJImUEHFyF492Hbe2c";
+// =============================
+
+const photoCache = {};
+
+async function getPhoto(spot) {
+  if (photoCache[spot.id]) return photoCache[spot.id];
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(spot.tag)}&per_page=1&orientation=landscape&client_id=${UNSPLASH_KEY}`
+    );
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      const url = data.results[0].urls.regular;
+      photoCache[spot.id] = url;
+      return url;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function imgPlaceholder(e, bg) {
+  return `<div style="width:100%;height:100%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:48px">${e}</div>`;
+}
+
 // --- LocalStorage ---
 function saveData(){
   try{
@@ -410,21 +437,30 @@ function renderDetail(pref){
   SPOTS[pref].forEach(spot=>{
     const isV=!!visited[spot.id],isW=!!wishlist[spot.id]&&!isV;
     html+=`<div class="spot-card${isV?" visited":isW?" wishlist":""}" onclick="renderSpot('${spot.id}')">
-      <div class="spot-header">
-        <div class="spot-map-area">${makeSVG(pref,110,90,[spot],spot.id)}</div>
-        <div class="spot-body">
-          <div class="spot-name-row">
-            <span class="spot-name">${spot.name}</span>
-            ${isV?'<span class="badge badge-visited">✓ 制覇済み</span>':isW?'<span class="badge badge-wish">🌟 行きたい</span>':""}
-          </div>
-          <div class="spot-desc">${spot.desc}</div>
-          <span class="season-tag" style="background:${spot.sc};color:${spot.st}">🗓 ${spot.season}</span>
-        </div>
+      <div id="card-img-${spot.id}" style="width:100%;height:160px;overflow:hidden;position:relative">
+        ${imgPlaceholder(spot.e,spot.sc)}
+        ${isV?'<div style="position:absolute;top:10px;right:10px;background:#7F77DD;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">✓ 制覇済み</div>':""}
+        ${isW?'<div style="position:absolute;top:10px;right:10px;background:#F59E0B;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">🌟 行きたい</div>':""}
+      </div>
+      <div class="spot-body">
+        <div class="spot-name-row"><span class="spot-name">${spot.name}</span></div>
+        <div class="spot-desc">${spot.desc}</div>
+        <span class="season-tag" style="background:${spot.sc};color:${spot.st}">🗓 ${spot.season}</span>
       </div>
     </div>`;
   });
   html+="</div>";
   document.getElementById("main").innerHTML=html;
+  SPOTS[pref].forEach(async spot=>{
+    const url=await getPhoto(spot);
+    const el=document.getElementById("card-img-"+spot.id);
+    if(el&&url){
+      const isV=!!visited[spot.id],isW=!!wishlist[spot.id]&&!isV;
+      el.innerHTML=`<img src="${url}" style="width:100%;height:160px;object-fit:cover;display:block">
+        ${isV?'<div style="position:absolute;top:10px;right:10px;background:#7F77DD;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">✓ 制覇済み</div>':""}
+        ${isW?'<div style="position:absolute;top:10px;right:10px;background:#F59E0B;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">🌟 行きたい</div>':""}`;
+    }
+  });
 }
 
 function renderSpot(spotId){
@@ -439,9 +475,13 @@ function renderSpot(spotId){
   const tipsHtml=d.tips.map(t=>`<div class="tip-item">${t}</div>`).join("");
   const tagsHtml=d.keywords.map(k=>`<span class="keyword-tag">${k}</span>`).join("");
   document.getElementById("main").innerHTML=`
-    <div class="hero-section">
-      <div class="hero-emoji">${currentSpot.e}</div>
-      <div class="hero-map"><div style="text-align:center">${svgHtml}<div style="font-size:11px;color:var(--color-text3);margin-top:6px">📍 ${currentSpot.area}</div></div></div>
+    <div id="hero-photo" style="width:100%;height:220px;border-radius:var(--radius);overflow:hidden;margin-bottom:14px;position:relative">
+      ${imgPlaceholder(currentSpot.e, currentSpot.sc)}
+      <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;backdrop-filter:blur(4px)">📍 ${currentSpot.area}</div>
+    </div>
+    <div style="margin-bottom:14px;background:var(--color-bg2);border-radius:var(--radius);padding:12px;border:0.5px solid var(--color-border);text-align:center">
+      ${svgHtml}
+      <div style="font-size:11px;color:var(--color-text3);margin-top:6px">県内でのおおよその位置</div>
     </div>
     <div class="action-links">
       <a href="${mapsUrl}" target="_blank" class="action-link">🗺 <span>Googleマップ</span></a>
@@ -475,6 +515,15 @@ function renderSpot(spotId){
     <div class="memo-card"><div class="memo-label">📝 メモ・感想</div><textarea id="memo-input" placeholder="行った感想や次回へのメモを残そう...">${memo}</textarea></div>
   `;
   document.getElementById("memo-input").addEventListener("input",e=>{memos[spotId]=e.target.value;saveData();});
+
+  // ヒーロー写真を非同期で読み込み
+  getPhoto(currentSpot).then(url=>{
+    const el=document.getElementById("hero-photo");
+    if(el&&url){
+      el.innerHTML=`<img src="${url}" style="width:100%;height:220px;object-fit:cover;display:block">
+        <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;backdrop-filter:blur(4px)">📍 ${currentSpot.area}</div>`;
+    }
+  });
 }
 
 function toggleWish(spotId){
