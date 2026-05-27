@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7F77DD">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="旅制覇">
+  <meta name="description" content="カップルで日本の絶景スポットを制覇しよう">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>旅制覇 Journey</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --color-bg:#ffffff;
+      --color-bg2:#f5f5f7;
+      --color-bg3:#ebebed;
+      --color-border:#e0e0e0;
+      --color-border2:#d0d0d0;
+      --color-text:#1a1a1a;
+      --color-text2:#555;
+      --color-text3:#999;
+      --color-primary:#7F77DD;
+      --color-primary-light:rgba(127,119,221,0.1);
+      --color-wish:#F59E0B;
+      --color-visited:#7F77DD;
+      --radius:14px;
+      --radius-sm:8px;
+      --font:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+    }
+    @media(prefers-color-scheme:dark){
+      :root{
+        --color-bg:#1c1c1e;
+        --color-bg2:#2c2c2e;
+        --color-bg3:#3a3a3c;
+        --color-border:#3a3a3c;
+        --color-border2:#48484a;
+        --color-text:#f2f2f7;
+        --color-text2:#aeaeb2;
+        --color-text3:#636366;
+        --color-primary-light:rgba(127,119,221,0.15);
+      }
+    }
+    html,body{height:100%;overflow:hidden}
+    body{font-family:var(--font);background:var(--color-bg);color:var(--color-text);display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+    /* セーフエリア対応 */
+    .header{padding:max(16px,env(safe-area-inset-top)) 16px 12px;border-bottom:0.5px solid var(--color-border);background:var(--color-bg);position:sticky;top:0;z-index:100}
+    .title-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .back-btn{background:var(--color-bg2);border:0.5px solid var(--color-border2);color:var(--color-text);border-radius:20px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:var(--font)}
+    .app-label{font-size:10px;letter-spacing:2px;color:var(--color-text3);text-transform:uppercase;margin-bottom:2px}
+    .app-title{font-size:18px;font-weight:600;color:var(--color-text)}
+    .progress-row{display:flex;align-items:center;gap:10px}
+    .progress-bar{flex:1;height:5px;background:var(--color-bg3);border-radius:3px;overflow:hidden}
+    .progress-fill{height:100%;background:var(--color-primary);border-radius:3px;transition:width 0.5s ease}
+    .progress-label{font-size:11px;color:var(--color-text3);white-space:nowrap}
+    .tabs{display:flex;background:var(--color-bg);border-bottom:0.5px solid var(--color-border)}
+    .tab{flex:1;padding:10px 4px;text-align:center;font-size:12px;background:none;border:none;color:var(--color-text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font);white-space:nowrap}
+    .tab.active{color:var(--color-primary);border-bottom:2px solid var(--color-primary);font-weight:600}
+    .main{flex:1;overflow-y:auto;padding:12px 16px max(24px,env(safe-area-inset-bottom))}
+    /* グリッド */
+    .hint{font-size:13px;color:var(--color-text3);text-align:center;margin-bottom:14px}
+    .pref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+    .pref-btn{background:var(--color-bg);border:0.5px solid var(--color-border);border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:left;transition:border-color 0.15s,transform 0.1s;width:100%}
+    .pref-btn:active{transform:scale(0.97)}
+    .pref-btn.done{border:1.5px solid var(--color-primary)}
+    .pref-thumb{width:100%;height:90px;display:flex;align-items:center;justify-content:center;background:var(--color-bg2)}
+    .pref-body{padding:8px 10px}
+    .pref-name{font-size:13px;font-weight:600;color:var(--color-text);margin-bottom:3px}
+    .pref-count{font-size:11px;color:var(--color-text3);margin-bottom:6px}
+    .mini-bar{height:3px;background:var(--color-bg3);border-radius:2px}
+    .mini-fill{height:100%;background:var(--color-primary);border-radius:2px}
+    /* スポットリスト */
+    .spot-list{display:flex;flex-direction:column;gap:10px}
+    .spot-card{background:var(--color-bg);border:0.5px solid var(--color-border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color 0.15s,transform 0.1s}
+    .spot-card:active{transform:scale(0.98)}
+    .spot-card.visited{border:1.5px solid var(--color-primary)}
+    .spot-card.wishlist{border:1.5px solid var(--color-wish)}
+    .spot-header{display:flex}
+    .spot-map-area{width:130px;min-width:130px;background:var(--color-bg2);display:flex;align-items:center;justify-content:center;padding:8px}
+    .spot-body{padding:12px 14px;flex:1;min-width:0}
+    .spot-name-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+    .spot-name{font-size:15px;font-weight:600;color:var(--color-text)}
+    .badge{font-size:10px;padding:2px 8px;border-radius:10px;white-space:nowrap}
+    .badge-visited{background:var(--color-primary);color:#fff}
+    .badge-wish{background:var(--color-wish);color:#fff}
+    .spot-desc{font-size:12px;color:var(--color-text2);line-height:1.6;margin-bottom:8px}
+    .season-tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600}
+    /* 詳細画面 */
+    .hero-section{border-radius:var(--radius);overflow:hidden;margin-bottom:14px;background:var(--color-bg2);display:flex;border:0.5px solid var(--color-border)}
+    .hero-emoji{flex:1;display:flex;align-items:center;justify-content:center;font-size:64px;padding:20px}
+    .hero-map{width:155px;min-width:155px;display:flex;align-items:center;justify-content:center;padding:12px;border-left:0.5px solid var(--color-border)}
+    .action-links{display:flex;gap:8px;margin-bottom:12px}
+    .action-link{display:flex;align-items:center;gap:8px;flex:1;background:var(--color-bg2);border:0.5px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--color-text);font-size:13px;cursor:pointer;text-decoration:none;transition:border-color 0.15s;font-family:var(--font)}
+    .action-link:active{opacity:0.7}
+    .insta-link{border-color:rgba(225,48,108,0.3)}
+    .detail-card{background:var(--color-bg);border:0.5px solid var(--color-border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+    .detail-name{font-size:20px;font-weight:700;color:var(--color-text);margin-bottom:8px}
+    .detail-desc{font-size:14px;color:var(--color-text2);line-height:1.7;margin-bottom:10px}
+    /* もっと見る */
+    .more-section{margin-top:14px;border-top:0.5px solid var(--color-border);padding-top:12px}
+    .more-toggle{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--color-primary);font-size:13px;cursor:pointer;padding:0;font-family:var(--font)}
+    .more-arrow{transition:transform 0.25s ease;font-size:12px;display:inline-block}
+    .more-toggle.open .more-arrow{transform:rotate(180deg)}
+    .more-content{overflow:hidden;max-height:0;transition:max-height 0.35s ease,opacity 0.3s ease;opacity:0}
+    .more-content.open{max-height:800px;opacity:1}
+    .more-inner{padding-top:12px;display:flex;flex-direction:column;gap:10px}
+    .more-block{background:var(--color-bg2);border-radius:var(--radius-sm);padding:12px}
+    .more-block-label{font-size:11px;color:var(--color-text3);margin-bottom:6px;font-weight:600}
+    .more-block-text{font-size:13px;color:var(--color-text);line-height:1.7}
+    .tips-list{display:flex;flex-direction:column;gap:6px}
+    .tip-item{font-size:13px;color:var(--color-text);line-height:1.6}
+    .tags-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+    .keyword-tag{font-size:11px;padding:3px 10px;border-radius:10px;background:var(--color-bg);border:0.5px solid var(--color-border);color:var(--color-text2)}
+    /* ボタン */
+    .action-btns{display:flex;gap:8px;margin-bottom:12px}
+    .wish-btn{flex:1;padding:14px;background:var(--color-bg2);border:1.5px solid var(--color-wish);border-radius:var(--radius);color:var(--color-wish);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:var(--font)}
+    .wish-btn.active{background:var(--color-wish);color:#fff}
+    .wish-btn:disabled{opacity:0.4;cursor:default}
+    .seika-btn{flex:1;padding:14px;background:var(--color-primary);border:none;border-radius:var(--radius);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:var(--font)}
+    .seika-btn:active{opacity:0.85;transform:scale(0.98)}
+    .seika-btn.done{background:var(--color-bg2);border:1.5px solid var(--color-primary);color:var(--color-primary)}
+    .visit-date{text-align:center;font-size:12px;color:var(--color-text3);margin-bottom:10px}
+    /* メモ */
+    .memo-card{background:var(--color-bg);border:0.5px solid var(--color-border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+    .memo-label{font-size:12px;color:var(--color-text3);margin-bottom:8px;font-weight:600}
+    textarea{width:100%;background:var(--color-bg2);border:0.5px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);padding:10px;font-size:13px;resize:vertical;min-height:80px;font-family:var(--font);line-height:1.5;outline:none}
+    textarea:focus{border-color:var(--color-primary)}
+    /* 行きたい */
+    .empty-state{text-align:center;padding:60px 16px;color:var(--color-text3)}
+    .empty-icon{font-size:48px;margin-bottom:16px}
+    .empty-text{font-size:15px;color:var(--color-text2);margin-bottom:6px;font-weight:600}
+    .empty-sub{font-size:13px}
+    .section-label{font-size:12px;color:var(--color-text3);margin-bottom:8px;font-weight:600}
+    /* 制覇マップ */
+    .map-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+    .stat-card{background:var(--color-bg2);border:0.5px solid var(--color-border);border-radius:var(--radius);padding:12px;text-align:center}
+    .stat-num{font-size:26px;font-weight:700;color:var(--color-primary)}
+    .stat-label{font-size:11px;color:var(--color-text3);margin-top:2px}
+    .japan-map-wrap{background:var(--color-bg2);border-radius:var(--radius);padding:16px;margin-bottom:16px;text-align:center;border:0.5px solid var(--color-border)}
+    .map-legend{display:flex;gap:12px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+    .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text2)}
+    .legend-dot{width:10px;height:10px;border-radius:50%}
+    .visited-pref-list{display:flex;flex-direction:column;gap:6px}
+    .visited-pref-item{background:var(--color-bg2);border:0.5px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+    .visited-pref-item:active{opacity:0.7}
+    .visited-pref-item.complete{border-color:var(--color-primary);background:var(--color-primary-light)}
+    .vpref-name{font-size:14px;font-weight:600;color:var(--color-text);flex:1}
+    .vpref-bar-wrap{width:70px}
+    .vpref-bar{height:4px;background:var(--color-bg3);border-radius:2px;overflow:hidden}
+    .vpref-bar-fill{height:100%;background:var(--color-primary);border-radius:2px}
+    .vpref-count{font-size:11px;color:var(--color-text3);white-space:nowrap}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title-row">
+    <button class="back-btn" id="back-btn" style="display:none">← 戻る</button>
+    <div>
+      <div class="app-label">旅制覇 Journey</div>
+      <div class="app-title" id="app-title">全国絶景スポット</div>
+    </div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label">0/28 (0%)</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('spots')">🗾 スポット</button>
+  <button class="tab" onclick="switchTab('wishlist')">🌟 行きたい</button>
+  <button class="tab" onclick="switchTab('mapview')">📍 制覇マップ</button>
+</div>
+
+<div class="main" id="main"></div>
+
+<script>
+const JAPAN_POS={北海道:{x:370,y:60,r:32},青森:{x:370,y:135,r:14},東京:{x:330,y:310,r:13},京都:{x:255,y:310,r:12},沖縄:{x:170,y:530,r:11},長野:{x:295,y:285,r:13},奈良:{x:265,y:325,r:11},広島:{x:210,y:320,r:14}};
+const PREF_SVG={
+  北海道:{vb:"0 0 200 160",color:"#B5D4F4",path:"M 30,130 L 28,118 L 22,108 L 18,95 L 20,82 L 28,72 L 32,60 L 38,50 L 48,42 L 58,36 L 68,32 L 80,28 L 92,26 L 104,28 L 114,32 L 124,38 L 134,44 L 142,52 L 150,60 L 158,68 L 164,76 L 168,86 L 166,96 L 160,104 L 150,110 L 138,114 L 124,116 L 110,116 L 96,114 L 84,112 L 72,114 L 62,120 L 52,126 L 42,130 Z M 164,74 L 170,68 L 178,62 L 184,56 L 188,50 L 186,44 L 180,42 L 174,46 L 170,54 L 168,62 Z"},
+  青森:{vb:"0 0 120 100",color:"#C0DD97",path:"M 20,80 L 18,68 L 20,56 L 26,46 L 34,38 L 30,28 L 28,18 L 34,12 L 42,14 L 46,22 L 44,32 L 50,38 L 60,34 L 68,28 L 72,18 L 78,12 L 86,14 L 90,22 L 88,32 L 82,40 L 92,44 L 98,52 L 100,62 L 96,72 L 88,80 L 76,84 L 62,86 L 48,84 L 34,82 Z M 88,34 L 96,28 L 102,22 L 104,14 L 98,10 L 92,12 L 88,20 L 86,28 Z"},
+  東京:{vb:"0 0 120 100",color:"#F5C4B3",path:"M 18,30 L 28,20 L 42,16 L 56,18 L 68,22 L 78,28 L 84,36 L 86,46 L 82,56 L 74,64 L 62,70 L 48,72 L 36,70 L 26,64 L 18,56 L 14,44 Z M 88,60 L 92,56 L 96,60 L 94,66 L 90,66 Z M 92,74 L 96,70 L 100,74 L 98,80 L 93,80 Z M 96,88 L 100,84 L 104,88 L 102,94 L 97,94 Z"},
+  京都:{vb:"0 0 100 140",color:"#FAC775",path:"M 34,10 L 42,6 L 50,8 L 56,14 L 52,22 L 46,26 L 42,34 L 48,40 L 58,42 L 66,48 L 70,58 L 68,70 L 62,80 L 56,90 L 50,100 L 44,110 L 40,120 L 38,130 L 34,134 L 28,130 L 26,120 L 28,108 L 30,96 L 28,84 L 24,74 L 22,62 L 24,50 L 28,40 L 30,28 L 30,18 Z M 42,6 L 38,0 L 32,2 L 30,10 L 34,10 Z"},
+  沖縄:{vb:"0 0 260 80",color:"#9FE1CB",path:"M 155,20 L 165,16 L 175,18 L 180,26 L 178,36 L 170,42 L 160,44 L 150,42 L 144,34 L 146,24 Z M 100,28 L 108,24 L 114,28 L 112,36 L 106,40 L 100,36 Z M 60,24 L 70,18 L 80,20 L 84,30 L 80,40 L 70,44 L 60,40 L 55,30 Z M 15,30 L 23,26 L 29,30 L 27,40 L 20,44 L 13,40 Z"},
+  長野:{vb:"0 0 110 140",color:"#CECBF6",path:"M 38,10 L 50,6 L 62,10 L 72,18 L 78,30 L 80,44 L 78,58 L 72,72 L 64,86 L 56,100 L 50,114 L 46,126 L 40,132 L 32,128 L 28,116 L 30,102 L 32,88 L 28,74 L 24,60 L 22,46 L 24,32 L 30,20 Z"},
+  奈良:{vb:"0 0 100 130",color:"#FAC775",path:"M 36,8 L 50,6 L 62,10 L 68,20 L 66,32 L 60,40 L 66,50 L 70,62 L 68,76 L 62,90 L 54,104 L 46,116 L 38,122 L 30,118 L 26,106 L 28,92 L 32,78 L 30,64 L 28,52 L 32,40 L 28,28 L 28,16 Z"},
+  広島:{vb:"0 0 160 100",color:"#F5C4B3",path:"M 18,20 L 35,14 L 55,12 L 75,14 L 95,16 L 112,20 L 124,28 L 128,40 L 122,52 L 110,60 L 95,66 L 78,68 L 62,66 L 48,62 L 35,56 L 24,48 L 16,36 Z M 80,72 L 88,68 L 94,72 L 92,80 L 84,82 L 78,78 Z M 100,74 L 106,70 L 112,74 L 110,82 L 103,83 Z"},
+};
+
+const SPOTS={
+  北海道:[
+    {id:"h1",name:"知床五湖",desc:"世界自然遺産の原生林と湖が生み出す、手つかずの絶景。",detail:{reason:"日本最後の秘境とも呼ばれる知床は、ヒグマや鮭が生息する生態系がそのまま残る場所。5つの湖が点在する遊歩道を歩けば、対岸に知床連山を望む絶景が広がります。",tips:["🐻 ヒグマ出没期は高架木道のみ歩行可能。事前確認を","🌅 早朝の湖面は鏡のように山が映り絶景","🎫 地上遊歩道はレクチャー受講が必要（所要30分）"],keywords:["世界遺産","秘境","ヒグマ","原生林","湖"]},season:"夏・秋",sc:"#fff8e1",st:"#f57f17",e:"🏔️",area:"北海道東部・斜里町",lat:44.071,lng:145.011,px:152,py:62,tag:"知床五湖"},
+    {id:"h2",name:"美瑛の丘",desc:"なだらかな丘に広がるパッチワーク状の畑。北海道らしい雄大な風景。",detail:{reason:"麦、じゃがいも、ビートなど異なる作物が色とりどりに広がる丘は、まるで大きなキャンバス。季節ごとに色が変わり、何度来ても新しい景色に出会えます。",tips:["🚲 レンタサイクルで周回がおすすめ（約2〜3時間）","📸 「パッチワークの路」が写真映えスポット","🌻 7月はひまわり、9月はコスモスが見頃"],keywords:["丘","パッチワーク","サイクリング","農村","北海道らしい"]},season:"夏",sc:"#fff8e1",st:"#f57f17",e:"🌾",area:"北海道中部・美瑛町",lat:43.596,lng:142.467,px:94,py:72,tag:"美瑛の丘"},
+    {id:"h3",name:"富良野のラベンダー畑",desc:"7月に紫一色に染まる幻想的なラベンダー畑。",detail:{reason:"日本最大級のラベンダー産地・富良野。ファーム富田のラベンダーが見頃を迎える7月は、丘全体が紫色に染まります。",tips:["📅 見頃は7月上旬〜中旬がピーク","🎠 ロープウェイから見る全体像は圧巻","🍦 ラベンダーソフトクリームは定番土産"],keywords:["ラベンダー","7月","紫","香り","ファーム富田"]},season:"夏",sc:"#fff8e1",st:"#f57f17",e:"💜",area:"北海道中部・富良野市",lat:43.35,lng:142.383,px:90,py:82,tag:"富良野ラベンダー"},
+    {id:"h4",name:"摩周湖",desc:"世界有数の透明度を誇る神秘の湖。",detail:{reason:"外来種が入り込まない閉鎖性の高い湖で、透明度は世界トップクラス。晴れた日のコバルトブルーの湖面は格別です。",tips:["☁️ 霧の日も神秘的でむしろ人気","🔭 第一展望台からの眺めが定番","❄️ 冬は−30℃に。防寒必須"],keywords:["透明度","神秘","霧","コバルトブルー","カルデラ湖"]},season:"春〜秋",sc:"#f3e5f5",st:"#6a1b9a",e:"🌊",area:"北海道東部・弟子屈町",lat:43.573,lng:144.533,px:138,py:74,tag:"摩周湖"},
+  ],
+  青森:[
+    {id:"a1",name:"奥入瀬渓流",desc:"十和田湖から流れ出る清流。苔むした岩と緑が別世界。",detail:{reason:"十和田湖から流れ出る唯一の川で、約14kmにわたって滝や急流が続きます。",tips:["🚶 全行程約4時間。バスで好きな区間だけでもOK","🍁 紅葉シーズン（10月中旬）は特に人気","📸 「阿修羅の流れ」が最も有名な撮影スポット"],keywords:["渓流","苔","滝","十和田湖","ウォーキング"]},season:"春・秋",sc:"#fce4ec",st:"#880e4f",e:"🌿",area:"青森県南東部・十和田市",lat:40.56,lng:140.93,px:78,py:62,tag:"奥入瀬渓流"},
+    {id:"a2",name:"白神山地",desc:"世界遺産のブナ原生林。手つかずの自然が残る秘境。",detail:{reason:"人の手が入っていないブナの原生林が広がる世界遺産エリア。",tips:["🏔️ 核心地域への立入は許可制","🌿 春の新緑と秋の紅葉が特に美しい","👟 トレッキングシューズ必須"],keywords:["世界遺産","ブナ","原生林","トレッキング","秘境"]},season:"春・秋",sc:"#fce4ec",st:"#880e4f",e:"🌲",area:"青森県西部・深浦町周辺",lat:40.45,lng:140.05,px:34,py:66,tag:"白神山地"},
+    {id:"a3",name:"弘前城の桜",desc:"日本三大桜名所。城と桜の絶景は圧巻。",detail:{reason:"約2,600本のソメイヨシノが城を囲む絶景は、日本の桜名所ランキングで常に上位。",tips:["🌸 見頃は4月下旬〜5月上旬","🚤 お堀のボートから見上げる桜が絶景","🍶 桜まつり期間は露店も多く賑やか"],keywords:["桜","日本三大","城","花筏","弘前"]},season:"春",sc:"#fce4ec",st:"#c2185b",e:"🌸",area:"青森県西部・弘前市",lat:40.607,lng:140.464,px:40,py:54,tag:"弘前城桜"},
+  ],
+  東京:[
+    {id:"t1",name:"高尾山",desc:"都心から1時間。ミシュラン三ツ星の山岳自然公園。",detail:{reason:"新宿から電車で約1時間という抜群のアクセスながら、豊かな自然はれっきとした登山体験。",tips:["🚡 ケーブルカーを使えば登山初心者でも登頂可","🍺 下山後は高尾山口駅周辺の温泉と地ビールがセット","🍁 11月の紅葉シーズンが最も美しい"],keywords:["登山","ミシュラン","ケーブルカー","紅葉","日帰り"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"⛰️",area:"東京都西部・八王子市",lat:35.625,lng:139.243,px:30,py:46,tag:"高尾山"},
+    {id:"t2",name:"お台場の夜景",desc:"レインボーブリッジと東京湾の夜景は都市の絶景。",detail:{reason:"レインボーブリッジ、東京タワー、スカイツリーが一望できる都市夜景の定番スポット。",tips:["🌇 日没30分後が最も美しい","🚢 水上バスでアクセスも非日常感があっておすすめ","🎡 観覧車からの夜景もカップルに人気"],keywords:["夜景","デート","レインボーブリッジ","海","都市"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🌉",area:"東京都中心部・港区台場",lat:35.629,lng:139.775,px:70,py:44,tag:"お台場夜景"},
+    {id:"t3",name:"奥多摩湖",desc:"青々とした山々に囲まれた人造湖。紅葉シーズンは格別。",detail:{reason:"東京の水源として作られた人造湖ですが、山々が鏡のように映り込む絶景が広がります。",tips:["🚗 奥多摩湖ドライブは紅葉シーズンが特におすすめ","🛶 カヌー体験やキャンプも楽しめる","☕ 湖畔のカフェでのんびりするのが定番"],keywords:["湖","ドライブ","紅葉","奥多摩","自然"]},season:"秋",sc:"#fff3e0",st:"#e65100",e:"🍁",area:"東京都西部・奥多摩町",lat:35.809,lng:139.014,px:22,py:34,tag:"奥多摩湖"},
+  ],
+  京都:[
+    {id:"k1",name:"嵐山の竹林",desc:"天を突くような竹が立ち並ぶ幻想的な小径。",detail:{reason:"高く伸びた孟宗竹が空を覆う小径は、昼でも薄暗く幽玄な雰囲気。",tips:["⏰ 早朝6時台が空いていて最もおすすめ","🚲 嵐山周辺は自転車で回るのが効率的","🍡 竹林を抜けた先の野宮神社も縁結びスポット"],keywords:["竹林","嵐山","朝活","幽玄","インスタ映え"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🎋",area:"京都府西部・嵐山",lat:35.017,lng:135.672,px:38,py:72,tag:"嵐山竹林"},
+    {id:"k2",name:"伏見稲荷大社",desc:"無数の朱色の鳥居が続くトンネル。夜明けが特に美しい。",detail:{reason:"約1万基の鳥居が山全体に連なる光景は京都屈指のスポット。",tips:["🌅 夜明け前後の朱色が最も幻想的","🦊 キツネ像を見つけながら歩くのが楽しい","⛰️ 山頂まで約2時間。動きやすい服装で"],keywords:["鳥居","パワースポット","朱色","ハイキング","インスタ映え"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"⛩️",area:"京都府南部・伏見区",lat:34.967,lng:135.773,px:48,py:86,tag:"伏見稲荷"},
+    {id:"k3",name:"清水寺の舞台",desc:"山の中腹に張り出した舞台からの眺め。",detail:{reason:"「清水の舞台から飛び降りる」のことわざでも有名な高さ13mの舞台。紅葉シーズンは特に圧巻です。",tips:["🍁 11月中旬の紅葉ライトアップがおすすめ","👘 着物レンタルで参拝すると雰囲気満点","🕐 開門は6時〜。早朝は観光客が少なく静か"],keywords:["清水の舞台","紅葉","ライトアップ","着物","京都観光"]},season:"春・秋",sc:"#fce4ec",st:"#880e4f",e:"🍂",area:"京都府東部・東山区",lat:34.995,lng:135.785,px:52,py:82,tag:"清水寺"},
+  ],
+  沖縄:[
+    {id:"o1",name:"川平湾",desc:"石垣島の絶景。エメラルドグリーンの海と白砂のビーチ。",detail:{reason:"日本百景に選ばれた石垣島の絶景スポット。グラスボートから海底を観察できます。",tips:["🚣 グラスボートで海底の珊瑚礁を観察できる","🏊 遊泳禁止のためシュノーケルは別ビーチへ","🌅 夕暮れ時も特に美しい"],keywords:["エメラルド","石垣島","グラスボート","日本百景","透明度"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🏖️",area:"沖縄・石垣島北西部",lat:24.451,lng:124.145,px:65,py:30,tag:"川平湾"},
+    {id:"o2",name:"古宇利島",desc:"コバルトブルーの海に浮かぶ島。橋からの眺めが絶景。",detail:{reason:"古宇利大橋を車で渡ると両サイドにコバルトブルーの海が広がります。ハートロックはカップルに大人気。",tips:["🚗 橋の上からの景色は窓を開けて楽しんで","💕 ハートロックはSNS映えスポット","🐚 ティーヌ浜の貝殻の多さが驚き"],keywords:["橋","コバルトブルー","ハートロック","カップル","ドライブ"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🌺",area:"沖縄本島北部・今帰仁村",lat:26.697,lng:128.03,px:163,py:26,tag:"古宇利島"},
+    {id:"o3",name:"与那国島の海底遺跡",desc:"謎に包まれた海底遺跡。ダイビングで見る異世界。",detail:{reason:"日本最西端の島の海底に眠る謎の岩造り構造物。ダイビングで間近に見ると圧倒的なスケールです。",tips:["🤿 ダイビングライセンス必須。現地でも取得可","🦈 ハンマーヘッドシャークの群れに会えることも","✈️ 石垣島から飛行機で約30分"],keywords:["海底遺跡","謎","ダイビング","最西端","与那国"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🐠",area:"沖縄・与那国島（最西端）",lat:24.45,lng:122.94,px:20,py:34,tag:"与那国島海底遺跡"},
+  ],
+  長野:[
+    {id:"n1",name:"上高地",desc:"北アルプスの玄関口。梓川と穂高連峰の絶景。",detail:{reason:"標高1,500mの山岳リゾートで、マイカー規制されているため澄んだ空気と静寂が保たれています。",tips:["🚌 マイカー規制あり。沢渡からシャトルバスを利用","🦢 大正池のモーニングは霧と逆さ穂高が美しい","🥾 河童橋まで約1時間のハイキングが定番"],keywords:["北アルプス","マイカー規制","大正池","河童橋","高原"]},season:"春〜秋",sc:"#f3e5f5",st:"#6a1b9a",e:"🏔️",area:"長野県西部・松本市",lat:36.239,lng:137.663,px:36,py:72,tag:"上高地"},
+    {id:"n2",name:"白馬村",desc:"北アルプスを望む高原リゾート。四季折々の絶景。",detail:{reason:"北アルプスの白馬三山を背景に広がる高原は、冬はスキーリゾート、夏は高山植物が広がります。",tips:["⛷️ 冬はスキー・スノーボードのメッカ","🌺 夏の高山植物お花畑が感動的","🌟 晴れた日の星空も圧巻"],keywords:["スキー","高山植物","パノラマ","北アルプス","四季"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"⛷️",area:"長野県北西部・白馬村",lat:36.698,lng:137.861,px:30,py:42,tag:"白馬村"},
+    {id:"n3",name:"地獄谷野猿公苑",desc:"温泉に入るサルで有名。雪景色の中の温泉猿は格別。",detail:{reason:"野生のニホンザルが温泉に入る世界でも珍しい光景。雪が積もる冬に温泉でリラックスする猿たちの姿はSNSでも世界的に有名。",tips:["❄️ 雪が積もる12〜2月が最も絵になる","📸 猿の顔のアップは望遠レンズがあると便利","♨️ 近くに渋温泉街があり宿泊もおすすめ"],keywords:["温泉猿","雪景色","野生動物","世界的","渋温泉"]},season:"冬",sc:"#e8eaf6",st:"#283593",e:"🐒",area:"長野県北部・山ノ内町",lat:36.732,lng:138.474,px:54,py:36,tag:"地獄谷野猿公苑"},
+  ],
+  奈良:[
+    {id:"na1",name:"吉野山の桜",desc:"日本一の桜の名所。山全体が桜色に染まる圧巻の光景。",detail:{reason:"約3万本の桜が山全体を覆う「一目千本」と称される絶景。",tips:["🌸 例年の見頃は4月上旬。下から上に順番に咲く","🚶 山を登りながら見る桜は体力勝負。歩きやすい靴で","🍡 吉野葛を使ったスイーツも名物"],keywords:["日本一","3万本","山桜","一目千本","世界遺産"]},season:"春",sc:"#fce4ec",st:"#c2185b",e:"🌸",area:"奈良県南部・吉野町",lat:34.368,lng:135.858,px:44,py:96,tag:"吉野山桜"},
+    {id:"na2",name:"東大寺の大仏",desc:"世界最大級の木造建築と巨大な大仏。奈良の象徴。",detail:{reason:"高さ15mの盧舎那仏は、奈良時代に国家の安泰を願って建立。世界遺産に登録されています。",tips:["🦌 奈良公園の鹿せんべいで鹿と触れ合える","🏛️ 大仏殿の柱の穴をくぐると健康になれるとか","🌅 夕暮れ時の大仏殿と鹿の風景が格別"],keywords:["世界遺産","大仏","鹿","奈良時代","木造建築"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🦌",area:"奈良県北部・奈良市",lat:34.688,lng:135.839,px:46,py:36,tag:"東大寺"},
+    {id:"na3",name:"曽爾高原",desc:"秋にススキが黄金色に輝く高原。関西屈指のスポット。",detail:{reason:"約40ヘクタールの広大な斜面にススキが一面に広がり、夕日に照らされると黄金色に輝きます。",tips:["🌾 見頃は10月中旬〜11月上旬","🌇 夕方に訪れると逆光で黄金色に輝く","🅿️ 週末は駐車場が混雑。早めの到着を"],keywords:["ススキ","秋","黄金","関西","高原"]},season:"秋",sc:"#fff3e0",st:"#e65100",e:"🌾",area:"奈良県東部・曽爾村",lat:34.545,lng:136.126,px:60,py:66,tag:"曽爾高原"},
+  ],
+  広島:[
+    {id:"hi1",name:"宮島・厳島神社",desc:"海に浮かぶ朱色の大鳥居。日本三景のひとつ。",detail:{reason:"海中に建つ大鳥居は干潮時には歩いて近づくこともでき、満潮時には海に浮かぶ幻想的な姿を見せます。",tips:["🌊 干潮と満潮で景色が変わる。潮汐を事前確認","🦌 島内にも鹿がいて神聖な雰囲気","🍴 牡蠣とあなごめしが宮島の名物グルメ"],keywords:["世界遺産","大鳥居","干潮","満潮","日本三景"]},season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"⛩️",area:"広島県南西部・廿日市市",lat:34.296,lng:132.32,px:44,py:60,tag:"宮島厳島神社"},
+    {id:"hi2",name:"三段峡",desc:"深い峡谷と滝が連なる国の特別名勝。紅葉が特に美しい。",detail:{reason:"中国地方最大の峡谷で、断崖絶壁と清流が織りなす景観が4kmにわたって続きます。",tips:["🚣 渡し船で峡谷を進む体験が唯一無二","🍁 紅葉の見頃は11月上旬〜中旬","🥾 ハイキングコースは片道約2時間"],keywords:["峡谷","渡し船","紅葉","中国地方","特別名勝"]},season:"秋",sc:"#fff3e0",st:"#e65100",e:"🍁",area:"広島県北部・安芸太田町",lat:34.617,lng:132.15,px:40,py:32,tag:"三段峡"},
+  ],
+};
+
+const PREFS=Object.keys(SPOTS);
+const ALL_SPOTS=Object.values(SPOTS).flat();
+let visited={},wishlist={},memos={};
+let view="map",currentPref=null,currentSpot=null,currentTab="spots";
+
+// =============================
+// ★ ここにAPIキーを貼り付けてください
+const UNSPLASH_KEY = "n-JZTXlugcKJN_aAh6abtUt5XpJImUEHFyF492Hbe2c";
+// =============================
+
+const photoCache = {};
+
+async function getPhoto(spot) {
+  if (photoCache[spot.id]) return photoCache[spot.id];
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(spot.tag)}&per_page=1&orientation=landscape&client_id=${UNSPLASH_KEY}`
+    );
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      const url = data.results[0].urls.regular;
+      photoCache[spot.id] = url;
+      return url;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function imgPlaceholder(e, bg) {
+  return `<div style="width:100%;height:100%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:48px">${e}</div>`;
+}
+
+// --- LocalStorage ---
+function saveData(){
+  try{
+    localStorage.setItem("tabi_visited",JSON.stringify(visited));
+    localStorage.setItem("tabi_wishlist",JSON.stringify(wishlist));
+    localStorage.setItem("tabi_memos",JSON.stringify(memos));
+  }catch(e){}
+}
+function loadData(){
+  try{
+    visited=JSON.parse(localStorage.getItem("tabi_visited")||"{}");
+    wishlist=JSON.parse(localStorage.getItem("tabi_wishlist")||"{}");
+    memos=JSON.parse(localStorage.getItem("tabi_memos")||"{}");
+  }catch(e){}
+}
+
+function updateProgress(){
+  const done=Object.keys(visited).length,total=ALL_SPOTS.length,pct=Math.round(done/total*100);
+  document.getElementById("progress-fill").style.width=pct+"%";
+  document.getElementById("progress-label").textContent=done+"/"+total+" ("+pct+"%)";
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll(".tab").forEach((t,i)=>{t.classList.toggle("active",["spots","wishlist","mapview"][i]===tab)});
+  view="map";currentPref=null;currentSpot=null;
+  document.getElementById("back-btn").style.display="none";
+  document.getElementById("app-title").textContent="全国絶景スポット";
+  if(tab==="spots")renderSpotMap();
+  else if(tab==="wishlist")renderWishlist();
+  else renderMapView();
+}
+
+function makeSVG(pref,rW,rH,spots,activeId){
+  const sv=PREF_SVG[pref];
+  if(!sv)return`<span style="font-size:32px">${SPOTS[pref][0].e}</span>`;
+  const [,,vW,vH]=sv.vb.split(" ").map(Number);
+  const sc=Math.min(rW/vW,rH/vH)*0.88;
+  const dots=spots.map(s=>{
+    const isA=s.id===activeId,isV=!!visited[s.id],isW=!!wishlist[s.id];
+    const cx=s.px*sc,cy=s.py*sc,r=isA?6:3.5;
+    const fill=isA?"#E24B4A":isV?"#7F77DD":isW?"#F59E0B":"rgba(128,128,128,0.3)";
+    return`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="white" stroke-width="${isA?2:1.2}"/>${isA?`<circle cx="${cx}" cy="${cy}" r="11" fill="none" stroke="#E24B4A" stroke-width="1.2" opacity="0.4"/>`:""}`;
+  }).join("");
+  return`<svg viewBox="${sv.vb}" width="${vW*sc}" height="${vH*sc}" style="display:block"><path d="${sv.path}" fill="${sv.color}" stroke="#bbb" stroke-width="0.8" stroke-linejoin="round"/>${dots}</svg>`;
+}
+
+function instaUrl(tag){return"https://www.instagram.com/explore/tags/"+encodeURIComponent(tag)+"/";}
+
+function toggleMore(){
+  const btn=document.getElementById("more-toggle"),c=document.getElementById("more-content");
+  const open=c.classList.contains("open");
+  c.classList.toggle("open");btn.classList.toggle("open");
+  btn.querySelector("span").textContent=open?"もっと見る":"閉じる";
+}
+
+function renderSpotMap(){
+  view="map";
+  let html='<p class="hint">行きたい都道府県を選ぼう</p><div class="pref-grid">';
+  PREFS.forEach(pref=>{
+    const total=SPOTS[pref].length,done=SPOTS[pref].filter(s=>visited[s.id]).length,allDone=done===total,pct=Math.round(done/total*100);
+    html+=`<button class="pref-btn${allDone?" done":""}" onclick="renderDetail('${pref}')">
+      <div class="pref-thumb">${makeSVG(pref,120,80,SPOTS[pref],null)}</div>
+      <div class="pref-body">
+        <div class="pref-name">${allDone?"✨ ":""}${pref}</div>
+        <div class="pref-count">${done}/${total} 制覇</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>
+      </div>
+    </button>`;
+  });
+  html+="</div>";
+  document.getElementById("main").innerHTML=html;
+}
+
+function renderWishlist(){
+  const wishSpots=ALL_SPOTS.filter(s=>wishlist[s.id]&&!visited[s.id]);
+  let html="";
+  if(wishSpots.length===0){
+    html=`<div class="empty-state"><div class="empty-icon">🌟</div><div class="empty-text">行きたいスポットがまだありません</div><div class="empty-sub">スポット詳細の「行きたい」ボタンで追加できます</div></div>`;
+  }else{
+    html=`<p class="section-label">行きたいスポット（${wishSpots.length}件）</p><div class="spot-list">`;
+    wishSpots.forEach(spot=>{
+      const pref=PREFS.find(p=>SPOTS[p].some(s=>s.id===spot.id));
+      html+=`<div class="spot-card wishlist" onclick="goToSpot('${spot.id}','${pref}')">
+        <div class="spot-header">
+          <div class="spot-map-area">${makeSVG(pref,110,90,[spot],spot.id)}</div>
+          <div class="spot-body">
+            <div class="spot-name-row"><span class="spot-name">${spot.name}</span><span class="badge badge-wish">🌟 行きたい</span></div>
+            <div class="spot-desc">${spot.desc}</div>
+            <span class="season-tag" style="background:${spot.sc};color:${spot.st}">🗓 ${spot.season}</span>
+          </div>
+        </div>
+      </div>`;
+    });
+    html+="</div>";
+  }
+  document.getElementById("main").innerHTML=html;
+}
+
+function goToSpot(spotId,pref){
+  currentTab="spots";
+  document.querySelectorAll(".tab").forEach((t,i)=>{t.classList.toggle("active",i===0)});
+  renderDetail(pref);
+  setTimeout(()=>renderSpot(spotId),10);
+}
+
+function renderMapView(){
+  const total=ALL_SPOTS.length,done=Object.keys(visited).length,pct=Math.round(done/total*100);
+  const prefsDone=PREFS.filter(p=>SPOTS[p].every(s=>visited[s.id])).length;
+  const wishCount=Object.keys(wishlist).filter(id=>!visited[id]).length;
+  const bubbles=PREFS.map(pref=>{
+    const pos=JAPAN_POS[pref],spots=SPOTS[pref];
+    const donePref=spots.filter(s=>visited[s.id]).length;
+    const allDone=donePref===spots.length,anyDone=donePref>0;
+    const fill=allDone?"#7F77DD":anyDone?"#B8B4EE":"#e5e5ea";
+    const textFill=allDone||anyDone?"#fff":"#999";
+    const stroke=allDone?"#5a54b5":anyDone?"#9994d4":"#ccc";
+    return`<g onclick="switchTab('spots');setTimeout(()=>renderDetail('${pref}'),50)" style="cursor:pointer">
+      <circle cx="${pos.x}" cy="${pos.y}" r="${pos.r}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" opacity="0.95"/>
+      <text x="${pos.x}" y="${pos.y+(donePref>0?-pos.r*0.2:1)}" text-anchor="middle" dominant-baseline="middle" font-size="${pos.r*0.62}" fill="${textFill}" font-family="sans-serif" font-weight="600">${pref.slice(0,2)}</text>
+      ${donePref>0?`<text x="${pos.x}" y="${pos.y+pos.r*0.52}" text-anchor="middle" dominant-baseline="middle" font-size="${pos.r*0.52}" fill="${textFill}" font-family="sans-serif">${donePref}/${spots.length}</text>`:""}
+    </g>`;
+  }).join("");
+  const visitedPrefs=PREFS.filter(p=>SPOTS[p].some(s=>visited[s.id]));
+  const listHtml=visitedPrefs.length===0
+    ?`<div style="text-align:center;color:var(--color-text3);font-size:13px;padding:24px 0">スポットを制覇するとここに表示されます</div>`
+    :`<div class="visited-pref-list">${visitedPrefs.map(pref=>{
+      const spots=SPOTS[pref],donePref=spots.filter(s=>visited[s.id]).length,allDone=donePref===spots.length,pct=Math.round(donePref/spots.length*100);
+      return`<div class="visited-pref-item${allDone?" complete":""}" onclick="switchTab('spots');setTimeout(()=>renderDetail('${pref}'),50)">
+        <span style="font-size:18px">${allDone?"✨":"📍"}</span>
+        <span class="vpref-name">${pref}</span>
+        <div class="vpref-bar-wrap"><div class="vpref-bar"><div class="vpref-bar-fill" style="width:${pct}%"></div></div></div>
+        <span class="vpref-count">${donePref}/${spots.length}</span>
+      </div>`;
+    }).join("")}</div>`;
+  document.getElementById("main").innerHTML=`
+    <div class="map-stats">
+      <div class="stat-card"><div class="stat-num">${done}</div><div class="stat-label">制覇済み</div></div>
+      <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-label">達成率</div></div>
+      <div class="stat-card"><div class="stat-num">${wishCount}</div><div class="stat-label">🌟行きたい</div></div>
+    </div>
+    <div class="japan-map-wrap">
+      <svg viewBox="80 30 380 540" width="100%" style="max-height:280px">
+        <ellipse cx="370" cy="100" rx="55" ry="45" fill="#dde8f5" opacity="0.5"/>
+        <ellipse cx="340" cy="200" rx="28" ry="35" fill="#dde8f5" opacity="0.5"/>
+        <ellipse cx="290" cy="270" rx="35" ry="30" fill="#dde8f5" opacity="0.5"/>
+        <ellipse cx="255" cy="310" rx="55" ry="28" fill="#dde8f5" opacity="0.5"/>
+        <ellipse cx="220" cy="340" rx="45" ry="25" fill="#dde8f5" opacity="0.5"/>
+        <ellipse cx="195" cy="370" rx="35" ry="22" fill="#dde8f5" opacity="0.5"/>
+        <ellipse cx="185" cy="410" rx="38" ry="38" fill="#dde8f5" opacity="0.4"/>
+        <line x1="140" y1="530" x2="240" y2="500" stroke="#dde8f5" stroke-width="3" opacity="0.6"/>
+        ${bubbles}
+      </svg>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>完全制覇</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#B8B4EE"></div>訪問中</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e5e5ea;border:1px solid #ccc"></div>未訪問</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:8px">訪問した都道府県（${visitedPrefs.length}件）</div>
+    ${listHtml}
+  `;
+}
+
+function renderDetail(pref){
+  view="detail";currentPref=pref;
+  document.getElementById("app-title").textContent="📍 "+pref;
+  document.getElementById("back-btn").style.display="block";
+  let html='<p class="hint">スポットをタップして詳細を確認しよう</p><div class="spot-list">';
+  SPOTS[pref].forEach(spot=>{
+    const isV=!!visited[spot.id],isW=!!wishlist[spot.id]&&!isV;
+    html+=`<div class="spot-card${isV?" visited":isW?" wishlist":""}" onclick="renderSpot('${spot.id}')">
+      <div id="card-img-${spot.id}" style="width:100%;height:160px;overflow:hidden;position:relative">
+        ${imgPlaceholder(spot.e,spot.sc)}
+        ${isV?'<div style="position:absolute;top:10px;right:10px;background:#7F77DD;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">✓ 制覇済み</div>':""}
+        ${isW?'<div style="position:absolute;top:10px;right:10px;background:#F59E0B;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">🌟 行きたい</div>':""}
+      </div>
+      <div class="spot-body">
+        <div class="spot-name-row"><span class="spot-name">${spot.name}</span></div>
+        <div class="spot-desc">${spot.desc}</div>
+        <span class="season-tag" style="background:${spot.sc};color:${spot.st}">🗓 ${spot.season}</span>
+      </div>
+    </div>`;
+  });
+  html+="</div>";
+  document.getElementById("main").innerHTML=html;
+  SPOTS[pref].forEach(async spot=>{
+    const url=await getPhoto(spot);
+    const el=document.getElementById("card-img-"+spot.id);
+    if(el&&url){
+      const isV=!!visited[spot.id],isW=!!wishlist[spot.id]&&!isV;
+      el.innerHTML=`<img src="${url}" style="width:100%;height:160px;object-fit:cover;display:block">
+        ${isV?'<div style="position:absolute;top:10px;right:10px;background:#7F77DD;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">✓ 制覇済み</div>':""}
+        ${isW?'<div style="position:absolute;top:10px;right:10px;background:#F59E0B;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">🌟 行きたい</div>':""}`;
+    }
+  });
+}
+
+function renderSpot(spotId){
+  view="spot";
+  currentSpot=ALL_SPOTS.find(s=>s.id===spotId);
+  document.getElementById("app-title").textContent=currentSpot.name;
+  document.getElementById("back-btn").style.display="block";
+  const isV=!!visited[spotId],isW=!!wishlist[spotId],memo=memos[spotId]||"",d=currentSpot.detail;
+  const mapsUrl=`https://www.google.com/maps?q=${currentSpot.lat},${currentSpot.lng}`;
+  const igUrl=instaUrl(currentSpot.tag);
+  const svgHtml=makeSVG(currentPref,130,120,SPOTS[currentPref],spotId);
+  const tipsHtml=d.tips.map(t=>`<div class="tip-item">${t}</div>`).join("");
+  const tagsHtml=d.keywords.map(k=>`<span class="keyword-tag">${k}</span>`).join("");
+  document.getElementById("main").innerHTML=`
+    <div id="hero-photo" style="width:100%;height:220px;border-radius:var(--radius);overflow:hidden;margin-bottom:14px;position:relative">
+      ${imgPlaceholder(currentSpot.e, currentSpot.sc)}
+      <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;backdrop-filter:blur(4px)">📍 ${currentSpot.area}</div>
+    </div>
+    <div style="margin-bottom:14px;background:var(--color-bg2);border-radius:var(--radius);padding:12px;border:0.5px solid var(--color-border);text-align:center">
+      ${svgHtml}
+      <div style="font-size:11px;color:var(--color-text3);margin-top:6px">県内でのおおよその位置</div>
+    </div>
+    <div class="action-links">
+      <a href="${mapsUrl}" target="_blank" class="action-link">🗺 <span>Googleマップ</span></a>
+      <a href="${igUrl}" target="_blank" class="action-link insta-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg>
+        <span>インスタで見る</span>
+      </a>
+    </div>
+    <div class="detail-card">
+      <div class="detail-name">${currentSpot.name}</div>
+      <div class="detail-desc">${currentSpot.desc}</div>
+      <span class="season-tag" style="background:${currentSpot.sc};color:${currentSpot.st};font-size:13px;padding:5px 16px">🗓 ${currentSpot.season}がおすすめ</span>
+      <div class="more-section">
+        <button class="more-toggle" id="more-toggle" onclick="toggleMore()"><span>もっと見る</span> <span class="more-arrow">▼</span></button>
+        <div class="more-content" id="more-content"><div class="more-inner">
+          <div class="more-block"><div class="more-block-label">❤️ おすすめの理由</div><div class="more-block-text">${d.reason}</div></div>
+          <div class="more-block"><div class="more-block-label">💡 行く前に知っておきたいこと</div><div class="tips-list">${tipsHtml}</div></div>
+          <div class="more-block"><div class="more-block-label">🏷 キーワード</div><div class="tags-row">${tagsHtml}</div></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="wish-btn${isW&&!isV?" active":""}" onclick="toggleWish('${spotId}')" ${isV?"disabled":""}>
+        ${isW&&!isV?"🌟 行きたい！":"🌟 行きたい"}
+      </button>
+      <button class="seika-btn${isV?" done":""}" onclick="toggleVisited('${spotId}')">
+        ${isV?"✓ 制覇済み":"🏆 制覇した！"}
+      </button>
+    </div>
+    ${isV&&visited[spotId]&&visited[spotId].date?`<div class="visit-date">${visited[spotId].date} に制覇しました 🎉</div>`:""}
+    <div class="memo-card"><div class="memo-label">📝 メモ・感想</div><textarea id="memo-input" placeholder="行った感想や次回へのメモを残そう...">${memo}</textarea></div>
+  `;
+  document.getElementById("memo-input").addEventListener("input",e=>{memos[spotId]=e.target.value;saveData();});
+
+  // ヒーロー写真を非同期で読み込み
+  getPhoto(currentSpot).then(url=>{
+    const el=document.getElementById("hero-photo");
+    if(el&&url){
+      el.innerHTML=`<img src="${url}" style="width:100%;height:220px;object-fit:cover;display:block">
+        <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;backdrop-filter:blur(4px)">📍 ${currentSpot.area}</div>`;
+    }
+  });
+}
+
+function toggleWish(spotId){
+  if(wishlist[spotId])delete wishlist[spotId];
+  else wishlist[spotId]=true;
+  saveData();renderSpot(spotId);
+}
+
+function toggleVisited(spotId){
+  if(visited[spotId]){delete visited[spotId];}
+  else{visited[spotId]={date:new Date().toLocaleDateString("ja-JP")};delete wishlist[spotId];}
+  saveData();updateProgress();renderSpot(spotId);
+}
+
+document.getElementById("back-btn").addEventListener("click",()=>{
+  if(view==="spot"){renderDetail(currentPref);}
+  else{
+    view="map";currentPref=null;
+    document.getElementById("back-btn").style.display="none";
+    document.getElementById("app-title").textContent="全国絶景スポット";
+    if(currentTab==="spots")renderSpotMap();
+    else if(currentTab==="wishlist")renderWishlist();
+    else renderMapView();
+  }
+});
+
+// Service Worker登録
+if("serviceWorker"in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+
+loadData();renderSpotMap();updateProgress();
+</script>
+</body>
+</html>
