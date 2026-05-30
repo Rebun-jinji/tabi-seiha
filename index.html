@@ -1010,27 +1010,19 @@ function toggleVisited(spotId){
 }
 
 document.getElementById("back-btn").addEventListener("click",()=>{
-  if(currentCategory==="pref"){
-    renderHome();
-    updateProgress();
-} else if(currentCategory==="anime"&&currentAnimeWork&&view==="spot"){
+  if(currentCategory==="anime"&&currentAnimeWork&&view==="spot"){
+    view="";
     renderAnimeWork(currentAnimeWork);
-    return;
   } else if(currentCategory==="anime"&&currentAnimeWork){
     currentAnimeWork=null;
     renderAnimeHome();
-    return;
   } else if(currentCategory==="anime"){
     renderHome();
-    return;
+  } else if(currentCategory==="pref"){
+    renderHome();
+    updateProgress();
   } else if(view==="spot"){
     renderDetail(currentPref);
-    currentAnimeWork=null;
-    renderAnimeHome();
-    return;
-  } else if(currentCategory==="anime"){
-    renderHome();
-    return;
   } else if(view==="detail"){
     view="map";currentPref=null;
     document.getElementById("back-btn").style.display="none";
@@ -1040,7 +1032,6 @@ document.getElementById("back-btn").addEventListener("click",()=>{
     renderHome();
   }
 });
-
 // Service Worker登録
 if("serviceWorker"in navigator){
   window.addEventListener("load",()=>{
