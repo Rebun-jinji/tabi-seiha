@@ -486,6 +486,12 @@ const doneSpots=Object.keys(visited).length;
   const doneAnime=ALL_ANIME_SPOTS.filter(s=>visited[s.id]).length;
   let html=`<div class="home-header"><div class="home-title">旅制覇 Journey</div><div class="home-sub">2人で日本を制覇しよう</div></div>
   <div class="category-grid">
+  <button class="category-card" onclick="selectCategory('spots')">
+      <div class="category-icon">🏞️</div>
+      <div class="category-name">絶景スポット</div>
+      <div class="category-count">${doneSpots}/${totalSpots} 制覇</div>
+      <div class="category-bar"><div class="category-bar-fill" style="width:${Math.round(doneSpots/totalSpots*100)}%"></div></div>
+    </button>
     <button class="category-card" onclick="selectCategory('pref')">
       <div class="category-icon">🗾</div>
       <div class="category-name">都道府県制覇</div>
