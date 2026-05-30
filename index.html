@@ -1012,7 +1012,7 @@ function toggleVisited(spotId){
 
 document.getElementById("back-btn").addEventListener("click",()=>{
   if(currentCategory==="anime"&&currentAnimeWork&&view==="spot"){
-    view="";
+    view="work";
     renderAnimeWork(currentAnimeWork);
   } else if(currentCategory==="anime"&&currentAnimeWork){
     currentAnimeWork=null;
