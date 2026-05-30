@@ -480,21 +480,23 @@ function renderHome(){
   document.getElementById("back-btn").style.display="none";
   document.getElementById("tabs").style.display="none";
   const totalSpots=ALL_SPOTS.length;
-  const doneSpots=Object.keys(visited).length;
+const doneSpots=Object.keys(visited).length;
   const donePref=Object.keys(prefVisited).length;
+  const totalAnime=ALL_ANIME_SPOTS.length;
+  const doneAnime=ALL_ANIME_SPOTS.filter(s=>visited[s.id]).length;
   let html=`<div class="home-header"><div class="home-title">旅制覇 Journey</div><div class="home-sub">2人で日本を制覇しよう</div></div>
   <div class="category-grid">
-    <button class="category-card" onclick="selectCategory('spots')">
-      <div class="category-icon">🏞️</div>
-      <div class="category-name">絶景スポット</div>
-      <div class="category-count">${doneSpots}/${totalSpots} 制覇</div>
-      <div class="category-bar"><div class="category-bar-fill" style="width:${Math.round(doneSpots/totalSpots*100)}%"></div></div>
-    </button>
     <button class="category-card" onclick="selectCategory('pref')">
       <div class="category-icon">🗾</div>
       <div class="category-name">都道府県制覇</div>
       <div class="category-count">${donePref}/47 制覇</div>
       <div class="category-bar"><div class="category-bar-fill" style="width:${Math.round(donePref/47*100)}%"></div></div>
+    </button>
+    <button class="category-card" onclick="selectCategory('anime')">
+      <div class="category-icon">🎬</div>
+      <div class="category-name">聖地巡礼</div>
+      <div class="category-count">${doneAnime}/${totalAnime} 制覇</div>
+      <div class="category-bar"><div class="category-bar-fill" style="width:${totalAnime?Math.round(doneAnime/totalAnime*100):0}%"></div></div>
     </button>
   </div>`;
   document.getElementById("main").innerHTML=html;
@@ -509,6 +511,11 @@ function selectCategory(cat){
     document.querySelectorAll(".tab").forEach((t,i)=>{t.classList.toggle("active",i===0)});
     renderSpotMap();
     updateProgress();
+    } else if(cat==="anime"){
+    document.getElementById("tabs").style.display="none";
+    document.getElementById("app-title").textContent="🎬 聖地巡礼";
+    document.getElementById("back-btn").style.display="block";
+    renderAnimeHome();
   } else if(cat==="pref"){
     document.getElementById("tabs").style.display="none";
     document.getElementById("app-title").textContent="🗾 都道府県制覇";
@@ -516,7 +523,194 @@ function selectCategory(cat){
     renderPrefConquest();
   }
 }
+const ANIME_WORKS=[
+  {id:"hyouka",name:"氷菓",icon:"📚",color:"#fff8e1",desc:"岐阜県飛騨高山を舞台にした青春ミステリー"},
+  {id:"natsume",name:"夏目友人帳",icon:"🐱",color:"#e8f5e9",desc:"熊本県人吉球磨を舞台にした妖怪との絆の物語"},
+  {id:"conan",name:"名探偵コナン",icon:"🔍",color:"#e3f2fd",desc:"全国各地を舞台にした国民的推理アニメ"},
+  {id:"hagaren",name:"鋼の錬金術師",icon:"⚗️",color:"#fce4ec",desc:"実写映画のロケ地が全国各地に点在"},
+];
+const ANIME_SPOTS={
+  hyouka:[
+    {id:"hy1",name:"岐阜県立斐太高等学校",work:"hyouka",pref:"岐阜",area:"岐阜県高山市",desc:"神山高校のモデル校。校門・校舎・桜並木がアニメに忠実に再現。",season:"通年",sc:"#fff8e1",st:"#f57f17",e:"🏫",lat:36.166,lng:137.233,tag:"Hida Takayama Japan",detail:{reason:"主人公たちが通う神山高校のモデル。校門や校舎がアニメのシーンと一致しており、ファンなら感動必至の場所。",tips:["📌 敷地内への立入は不可。外から見学を","🌸 春の桜と校舎のコントラストが美しい","📷 校門周辺がアニメと同じ構図で撮影できる"],keywords:["氷菓","神山高校","飛騨高山","聖地","桜"]}},
+    {id:"hy2",name:"バグパイプ（喫茶店）",work:"hyouka",pref:"岐阜",area:"岐阜県高山市",desc:"第3話でえると奉太郎が話し合うシーンで登場した喫茶店。実際に入店できる。",season:"通年",sc:"#fff8e1",st:"#f57f17",e:"☕",lat:36.144,lng:137.252,tag:"Bagpipe cafe Takayama",detail:{reason:"アニメ第3話でえるが奉太郎に頼み事をした喫茶店。外観・内装ともにアニメに忠実で、同じ席で同じ体験ができる。",tips:["☕ 実際に営業中の喫茶店","📍 高山駅から徒歩圏内","🎬 第3話を見てから訪れると感動が倍増"],keywords:["氷菓","バグパイプ","喫茶店","高山","えると奉太郎"]}},
+    {id:"hy3",name:"弥生橋・鍛冶橋",work:"hyouka",pref:"岐阜",area:"岐阜県高山市",desc:"OPに登場する宮川に架かる石造りの橋。えるが奉太郎から入部届を受け取った場所。",season:"通年",sc:"#fff8e1",st:"#f57f17",e:"🌉",lat:36.145,lng:137.254,tag:"Yayoi bridge Takayama",detail:{reason:"アニメOPに登場する橋。えるが奉太郎から入部届を受け取った場所でもある。",tips:["📷 橋の上からの宮川の眺めがアニメと一致","🌊 宮川沿いの朝市も近くにある","🎬 OPを見てから訪れると感動が増す"],keywords:["氷菓","弥生橋","鍛冶橋","宮川","高山"]}},
+    {id:"hy4",name:"飛騨一宮水無神社",work:"hyouka",pref:"岐阜",area:"岐阜県高山市（飛騨一之宮）",desc:"アニメ最終話「遠まわりする雛」で生きびな祭りの舞台となった神社。",season:"春",sc:"#fff8e1",st:"#f57f17",e:"⛩️",lat:36.119,lng:137.298,tag:"Minashi shrine Hida",detail:{reason:"アニメ最終話の舞台となった神社。春の生きびな祭りの時期は特にファンが多く訪れる聖地中の聖地。",tips:["🌸 4月下旬の生きびな祭りが見どころ","⛩️ 境内は厳かな雰囲気","🌸 近くに臥龍桜がありセットで観光を"],keywords:["氷菓","水無神社","生きびな祭り","最終話","飛騨"]}},
+    {id:"hy5",name:"高山市図書館 煥章館",work:"hyouka",pref:"岐阜",area:"岐阜県高山市",desc:"作中の神山市立図書館のモデル。米澤穂信先生が古典部シリーズを執筆した場所でもある。",season:"通年",sc:"#fff8e1",st:"#f57f17",e:"📖",lat:36.146,lng:137.255,tag:"Takayama library Japan",detail:{reason:"作中に登場する図書館のモデルであり、原作者・米澤穂信先生が古典部シリーズの3作目を執筆した場所。",tips:["📚 実際に利用できる公共図書館","📝 米澤穂信先生が執筆した場所として有名","🏛️ 外観がアニメの図書館と一致"],keywords:["氷菓","図書館","米澤穂信","古典部","高山"]}},
+    {id:"hy6",name:"臥龍桜",work:"hyouka",pref:"岐阜",area:"岐阜県高山市（飛騨一之宮）",desc:"樹齢1,100年の天然記念物の一本桜。アニメにも登場し、春に圧巻の姿を見せる。",season:"春",sc:"#fce4ec",st:"#c2185b",e:"🌸",lat:36.12,lng:137.299,tag:"Garyuuzakura cherry Hida",detail:{reason:"樹齢1,100年を超える天然記念物の一本桜。水無神社のすぐ近くにあり、春には圧巻の桜の姿が見られる。",tips:["🌸 見頃は4月中旬〜下旬","📷 ライトアップされた夜桜も美しい","⛩️ 水無神社とセットで訪れるのがおすすめ"],keywords:["氷菓","臥龍桜","天然記念物","一本桜","飛騨"]}},
+  ],
+  natsume:[
+    {id:"na1",name:"天狗橋",work:"natsume",pref:"熊本",area:"熊本県人吉市",desc:"アニメで最も登場回数が多い赤いアーチ橋。夏目が妖と出会う象徴的な場所。",season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🌉",lat:32.21,lng:130.74,tag:"Tengu bridge Hitoyoshi",detail:{reason:"球磨川に架かる赤いアーチ橋で、アニメに最も頻繁に登場するスポット。令和7年11月に復旧工事完了・再開通。",tips:["🌉 令和7年11月に復旧工事完了・再開通","📷 橋の赤色がアニメと同じで感動的","🚌 人吉駅から徒歩でアクセス可能"],keywords:["夏目友人帳","天狗橋","人吉","球磨川","復興"]}},
+    {id:"na2",name:"青井阿蘇神社",work:"natsume",pref:"熊本",area:"熊本県人吉市",desc:"国宝に指定された茅葺き屋根の神社。探訪ノートやスタンプが置かれた公式聖地。",season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"⛩️",lat:32.215,lng:130.747,tag:"Aoi Aso shrine Hitoyoshi",detail:{reason:"国宝に指定された美しい茅葺き屋根の神社。探訪ノートや記念スタンプが設置されている。",tips:["📓 探訪ノートと記念スタンプが置かれている","🏛️ 本殿など5棟が国宝に指定","⛩️ 人吉駅から徒歩約10分"],keywords:["夏目友人帳","青井阿蘇神社","国宝","人吉","スタンプ"]}},
+    {id:"na3",name:"人吉駅",work:"natsume",pref:"熊本",area:"熊本県人吉市",desc:"第2期8話「不死の想い」に登場する駅。千津さんの切ない物語の舞台。",season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🚂",lat:32.213,lng:130.747,tag:"Hitoyoshi station Kumamoto",detail:{reason:"アニメ第2期8話に登場する駅。ホームや改札口が忠実に再現されており、切ない物語の舞台として多くのファンが訪れる。",tips:["🚂 駅舎の外観がアニメと同じ","📷 ホームから見える風景がアニメと一致","♨️ 人吉温泉とセットで旅行するのがおすすめ"],keywords:["夏目友人帳","人吉駅","続夏目","切ない","熊本"]}},
+    {id:"na4",name:"笠松橋",work:"natsume",pref:"熊本",area:"熊本県人吉市",desc:"美しいアーチ型の石橋。夜のライトアップが幻想的で作品の世界観にぴったり。",season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"🌙",lat:32.22,lng:130.74,tag:"Kasamatsu bridge Hitoyoshi",detail:{reason:"アニメに登場する美しいアーチ型の石橋。夜のライトアップが特に幻想的。",tips:["🌙 夜のライトアップが特に幻想的","🏞️ 周辺が公園として整備されており散策しやすい","📷 石橋の美しいアーチが人気"],keywords:["夏目友人帳","笠松橋","石橋","ライトアップ","人吉"]}},
+    {id:"na5",name:"市房ダム",work:"natsume",pref:"熊本",area:"熊本県球磨郡水上村",desc:"「六話 水底の燕」で燕たちが眠る場所として登場するダム湖。",season:"通年",sc:"#e8f5e9",st:"#2e7d32",e:"💧",lat:32.28,lng:130.99,tag:"Ichifusa dam Kumamoto",detail:{reason:"「六話 水底の燕」で燕たちが眠る場所として登場するダム湖。澄んだ湖面と山々の景色が幻想的。",tips:["💧 市房山神宮参道の千手観音杉も見どころ","🌿 自然豊かな環境でドライブも楽しい","📷 ダム湖の澄んだ水面が幻想的"],keywords:["夏目友人帳","市房ダム","水上村","水底の燕","湖"]}},
+  ],
+  conan:[
+    {id:"cn1",name:"青山剛昌ふるさと館",work:"conan",pref:"鳥取",area:"鳥取県東伯郡北栄町",desc:"コナンの作者・青山剛昌先生の出身地に建つ公式博物館。貴重な原画や仕事部屋の再現コーナーがある。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🔍",lat:35.466,lng:133.786,tag:"Gosho Aoyama museum Hokuei",detail:{reason:"コナンの作者・青山剛昌先生の出身地に建つ公式博物館。原画や仕事部屋の再現コーナーが充実。2027年に新館オープン予定。",tips:["🎫 入館料が必要。事前確認を","🔍 ターボエンジン付スケートボードの体験ができる","🏛️ 2027年に新館がオープン予定"],keywords:["名探偵コナン","青山剛昌","博物館","北栄町","原画"]}},
+    {id:"cn2",name:"コナン通り（米花商店街）",work:"conan",pref:"鳥取",area:"鳥取県東伯郡北栄町",desc:"キャラのブロンズ像やマンホールが並ぶ通り。工藤邸の門・喫茶ポアロも再現。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏘️",lat:35.468,lng:133.785,tag:"Conan street Hokuei Tottori",detail:{reason:"キャラクターのブロンズ像や特製マンホールが点在する商店街。工藤邸の門インターホンを押すとキャラの声が聞こえる。",tips:["🏠 工藤邸の門のインターホンを押すとキャラの声が！","🗺️ レアデザインのマンホールを探すのが楽しい","☕ 喫茶ポアロを再現した喫茶店でひと休みを"],keywords:["名探偵コナン","コナン通り","工藤邸","米花商店街","北栄町"]}},
+    {id:"cn3",name:"コナン駅（JR由良駅）",work:"conan",pref:"鳥取",area:"鳥取県東伯郡北栄町",desc:"「コナン駅」の愛称で親しまれるJR由良駅。駅内360度コナン尽くしの空間。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🚂",lat:35.471,lng:133.78,tag:"Yura station Conan Tottori",detail:{reason:"JR由良駅は「コナン駅」の愛称で知られ、駅内はコナンのイラストで埋め尽くされた空間。",tips:["🚂 駅舎がコナン仕様にデザインされている","📍 青山剛昌ふるさと館への最寄り駅","📷 コナンのキャラクターと一緒に写真が撮れる"],keywords:["名探偵コナン","由良駅","コナン駅","北栄町","鳥取"]}},
+    {id:"cn4",name:"コナン大橋",work:"conan",pref:"鳥取",area:"鳥取県東伯郡北栄町",desc:"北栄町のシンボル的な橋。コナンキャラのブロンズ像6体とレリーフ12枚が並ぶ。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🌉",lat:35.474,lng:133.782,tag:"Conan bridge Hokuei",detail:{reason:"5種類6体のブロンズ像と4種類12枚のレリーフが並ぶ橋。専用アプリでARキャラクター撮影もできる。",tips:["📷 ブロンズ像との撮影が定番","📱 専用アプリでAR撮影できる","🌊 橋から見える日本海の景色も美しい"],keywords:["名探偵コナン","コナン大橋","北栄町","モニュメント","AR"]}},
+    {id:"cn5",name:"鳥取砂丘コナン空港",work:"conan",pref:"鳥取",area:"鳥取県鳥取市",desc:"コナンの愛称がついた鳥取空港。空港内がコナン仕様にデザインされている。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"✈️",lat:35.532,lng:134.167,tag:"Tottori airport Conan",detail:{reason:"「鳥取砂丘コナン空港」の愛称がついた鳥取空港。空港内にコナンのキャラクターが随所に登場。",tips:["✈️ 聖地巡礼の入口・出口として","📷 空港内のコナンデザインで記念撮影","🚌 北栄町へは空港から路線バスでアクセス"],keywords:["名探偵コナン","鳥取空港","コナン","鳥取","玄関口"]}},
+    {id:"cn6",name:"大阪城（世紀末の魔術師）",work:"conan",pref:"大阪",area:"大阪府大阪市中央区",desc:"「世紀末の魔術師」「から紅の恋歌」など複数の映画に登場する大阪の象徴。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏯",lat:34.687,lng:135.526,tag:"Osaka castle Conan",detail:{reason:"「世紀末の魔術師」でキッドの予告状の舞台として登場。複数の映画でも登場する大阪コナン聖地の定番。",tips:["🏯 映画のシーンを思い出しながら天守閣へ","🌸 春の桜が美しい大阪城公園","🚇 大阪メトロ谷町四丁目駅から徒歩約15分"],keywords:["名探偵コナン","世紀末の魔術師","大阪城","怪盗キッド","大阪"]}},
+    {id:"cn7",name:"通天閣・道頓堀",work:"conan",pref:"大阪",area:"大阪府大阪市",desc:"「世紀末の魔術師」で平次がコナンたちに大阪を案内するシーンで登場。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🎪",lat:34.652,lng:135.506,tag:"Tsutenkaku Dotonbori Conan",detail:{reason:"「世紀末の魔術師」で服部平次が「どや？えートコろ大阪は！！」と案内する名シーンの舞台。",tips:["🎪 通天閣展望台からの眺めを平次気分で","🐙 道頓堀のたこ焼き・くいだおれも楽しんで","📷 グリコのサインとの記念撮影が定番"],keywords:["名探偵コナン","通天閣","道頓堀","服部平次","大阪"]}},
+    {id:"cn8",name:"醍醐寺（迷宮の十字路）",work:"conan",pref:"京都",area:"京都府京都市伏見区",desc:"「迷宮の十字路」で平次と初恋の女の子が出会った三能寺のモデル。世界遺産。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"⛩️",lat:34.951,lng:135.833,tag:"Daigo-ji temple Kyoto Conan",detail:{reason:"「迷宮の十字路」で服部平次が初恋の女の子と出会った三能寺のモデル。世界遺産にも登録された格式ある寺院。",tips:["🌸 春の桜まつりが圧巻","🎫 境内が広いので2〜3時間かかる","🏛️ 世界遺産として保護されている"],keywords:["名探偵コナン","迷宮の十字路","醍醐寺","世界遺産","平次の初恋"]}},
+    {id:"cn9",name:"南禅寺・水路閣（迷宮の十字路）",work:"conan",pref:"京都",area:"京都府京都市左京区",desc:"「迷宮の十字路」クライマックスシーンの舞台。アーチ型レンガ造りが印象的。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏛️",lat:35.011,lng:135.793,tag:"Nanzenji aqueduct Kyoto Conan",detail:{reason:"「迷宮の十字路」のクライマックスにも関わる場所。映画と同じアングルで写真を撮れる。",tips:["📷 水路閣は映画と同じアングルで写真が撮れる","🌿 境内の自然も美しい","🚶 周辺の哲学の道と合わせて散策がおすすめ"],keywords:["名探偵コナン","迷宮の十字路","南禅寺","水路閣","クライマックス"]}},
+    {id:"cn10",name:"清水寺（迷宮の十字路）",work:"conan",pref:"京都",area:"京都府京都市東山区",desc:"「迷宮の十字路」で蘭・園子・和葉が二年坂・三年坂を散策するシーンの舞台。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🍂",lat:34.995,lng:135.785,tag:"Kiyomizudera Conan Kyoto",detail:{reason:"「迷宮の十字路」で蘭・園子・和葉が散策するシーンの舞台。映画と同じルートで二年坂・三年坂を歩ける。",tips:["👘 着物レンタルで参拝すると雰囲気満点","🍡 二年坂・三年坂で食べ歩きが楽しい","🌸 春の桜と紅葉の季節が特に美しい"],keywords:["名探偵コナン","迷宮の十字路","清水寺","二年坂","三年坂"]}},
+    {id:"cn11",name:"渡月橋（から紅の恋歌）",work:"conan",pref:"京都",area:"京都府京都市右京区",desc:"「から紅の恋歌」の象徴的なスポット。主題歌「渡月橋～君 想ふ～」の舞台。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🌉",lat:35.017,lng:135.678,tag:"Togetsu-kyo bridge Arashiyama Conan",detail:{reason:"「から紅の恋歌」で最も印象的なスポット。主題歌のタイトルにもなった渡月橋はファンにとって特別な場所。",tips:["🌉 早朝に訪れると霧の中の橋が幻想的","🚢 屋形船から嵐山の山並みと川を楽しめる","🍁 秋の紅葉シーズンが特に美しい"],keywords:["名探偵コナン","から紅の恋歌","渡月橋","嵐山","主題歌"]}},
+    {id:"cn12",name:"近江神宮（から紅の恋歌）",work:"conan",pref:"滋賀",area:"滋賀県大津市",desc:"「から紅の恋歌」で百人一首の大会会場「阿知波会館」のモデルとなった神社。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"⛩️",lat:35.024,lng:135.851,tag:"Omi Jingu shrine Conan karuta",detail:{reason:"「から紅の恋歌」で百人一首の聖地として登場する阿知波会館のモデル。実際にかるたの聖地として有名。",tips:["🃏 実際に百人一首（かるた）の聖地","⛩️ 壮大な神社建築が印象的","🎬 「ちはやふる」の聖地でもある"],keywords:["名探偵コナン","から紅の恋歌","近江神宮","百人一首","かるた"]}},
+    {id:"cn13",name:"五稜郭・五稜郭タワー",work:"conan",pref:"北海道",area:"北海道函館市",desc:"「100万ドルの五稜星」の主要舞台。怪盗キッドとの激闘の舞台。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"⭐",lat:41.796,lng:140.757,tag:"Goryokaku Hakodate Conan",detail:{reason:"「100万ドルの五稜星」のメインの舞台。星形の城塞・五稜郭タワーの展望台からの眺めが絶景。",tips:["⭐ 展望室のシースルーフロアで映画の感覚を体感","🌸 桜の季節は五稜郭が桜で埋め尽くされる","🏰 函館奉行所も合わせて見学を"],keywords:["名探偵コナン","100万ドルの五稜星","五稜郭","函館","怪盗キッド"]}},
+    {id:"cn14",name:"金森赤レンガ倉庫（函館）",work:"conan",pref:"北海道",area:"北海道函館市",desc:"「100万ドルの五稜星」に登場する函館ベイエリアの象徴的なスポット。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏭",lat:41.773,lng:140.723,tag:"Kanemori warehouse Hakodate Conan",detail:{reason:"「100万ドルの五稜星」に登場する函館ベイエリアのランドマーク。昼は歴史的な赤レンガが映え、夜はライトアップが幻想的。",tips:["🌃 夜のライトアップが特に幻想的","🛍️ 内部にショップやレストランが充実","📷 函館港を背景にした写真が映える"],keywords:["名探偵コナン","100万ドルの五稜星","金森赤レンガ倉庫","函館","ベイエリア"]}},
+    {id:"cn15",name:"函館山展望台",work:"conan",pref:"北海道",area:"北海道函館市",desc:"「100万ドルの五稜星」に登場する世界三大夜景のひとつ。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🌃",lat:41.757,lng:140.693,tag:"Hakodate mountain night view Conan",detail:{reason:"「100万ドルの五稜星」に登場する世界三大夜景のひとつ。映画のラストシーンを思わせる函館の夜景が眼下に広がる。",tips:["🌃 世界三大夜景のひとつ","🚡 ロープウェイで約3分で山頂へ","🌅 日没後30分〜1時間が最も美しい"],keywords:["名探偵コナン","100万ドルの五稜星","函館山","夜景","世界三大夜景"]}},
+    {id:"cn16",name:"八幡坂（函館）",work:"conan",pref:"北海道",area:"北海道函館市",desc:"「100万ドルの五稜星」に登場する函館の有名な坂道。港を見下ろす絶景。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏔️",lat:41.774,lng:140.721,tag:"Hachimanaka slope Hakodate Conan",detail:{reason:"「100万ドルの五稜星」に登場する函館を代表する坂道。坂の上から見下ろす港と函館湾の景色が映画さながら。",tips:["📷 坂の上からの港の眺めが絶景","❄️ 雪の季節も美しい","🚶 函館の坂道めぐりと合わせて散策"],keywords:["名探偵コナン","100万ドルの五稜星","八幡坂","函館","絶景"]}},
+    {id:"cn17",name:"国立天文台 野辺山（隻眼の残像）",work:"conan",pref:"長野",area:"長野県南佐久郡南牧村",desc:"「隻眼の残像」（2025年）のメイン舞台。直径45mの巨大パラボラアンテナが印象的。",season:"春〜秋",sc:"#e3f2fd",st:"#1565c0",e:"🔭",lat:35.944,lng:138.473,tag:"Nobeyama radio observatory Conan",detail:{reason:"「隻眼の残像」で最も印象的に描かれた舞台。直径45mの巨大パラボラアンテナが映画の象徴的な場所として登場。",tips:["🔭 一般公開日は無料で見学できる","🚂 JR小海線「野辺山駅」から徒歩約35分","❄️ 冬は積雪するので春〜秋の訪問がおすすめ"],keywords:["名探偵コナン","隻眼の残像","野辺山天文台","パラボラアンテナ","長野"]}},
+    {id:"cn18",name:"善光寺（隻眼の残像）",work:"conan",pref:"長野",area:"長野県長野市",desc:"「隻眼の残像」に登場する長野を代表する1,400年の歴史を持つ名刹。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"⛩️",lat:36.661,lng:138.188,tag:"Zenkoji temple Nagano Conan",detail:{reason:"「隻眼の残像」でコナンたちが訪れる長野の象徴的な寺院。劇中のシーンと同じ場所で写真撮影を楽しめる。",tips:["⛩️ 創建以来約1,400年の歴史がある名刹","📷 映画のシーンと同じ場所で記念撮影","🚶 長野駅から徒歩約30分、バスで約10分"],keywords:["名探偵コナン","隻眼の残像","善光寺","長野","1400年"]}},
+    {id:"cn19",name:"パシフィコ横浜（ハイウェイの堕天使）",work:"conan",pref:"神奈川",area:"神奈川県横浜市西区",desc:"「ハイウェイの堕天使」（2026年）でバイクフェスの会場として登場するみなとみらいの施設。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏟️",lat:35.458,lng:139.637,tag:"Pacifico Yokohama Conan",detail:{reason:"「ハイウェイの堕天使」で「神奈川モーターサイクルフェスティバル」の会場として登場するみなとみらいの大型施設。",tips:["🏟️ みなとみらいの大型コンベンション施設","🚇 みなとみらい線「みなとみらい駅」すぐ","🌊 横浜港の眺めも美しい"],keywords:["名探偵コナン","ハイウェイの堕天使","パシフィコ横浜","みなとみらい","バイクフェス"]}},
+    {id:"cn20",name:"みなとみらい・けやき通り（ハイウェイの堕天使）",work:"conan",pref:"神奈川",area:"神奈川県横浜市西区",desc:"「ハイウェイの堕天使」でコナンたちが走る横浜みなとみらいの中心エリア。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🌆",lat:35.456,lng:139.631,tag:"Minato Mirai Yokohama Conan",detail:{reason:"「ハイウェイの堕天使」で映画の中心舞台となるみなとみらいエリア。けやき通りを中心に映画のシーンが多数撮影されている。",tips:["🌆 みなとみらいの夜景と合わせて楽しめる","📷 映画のシーンと同じアングルで撮影できる","🚇 みなとみらい線一日乗車券でお得に巡れる"],keywords:["名探偵コナン","ハイウェイの堕天使","みなとみらい","けやき通り","横浜"]}},
+    {id:"cn21",name:"横浜赤レンガ倉庫（ハイウェイの堕天使）",work:"conan",pref:"神奈川",area:"神奈川県横浜市中区",desc:"「ハイウェイの堕天使」関連のコナンプラザが期間限定オープンした横浜の名所。",season:"通年",sc:"#e3f2fd",st:"#1565c0",e:"🏭",lat:35.45,lng:139.643,tag:"Red brick warehouse Yokohama Conan",detail:{reason:"「ハイウェイの堕天使」公開に合わせて「名探偵コナンプラザ」が期間限定オープン。横浜観光と合わせて楽しめる。",tips:["🏭 期間限定コナンプラザの開催情報を事前確認","📷 横浜港を背景にした写真が映える","🌃 夜のライトアップが特に美しい"],keywords:["名探偵コナン","ハイウェイの堕天使","赤レンガ倉庫","横浜","コナンプラザ"]}},
+  ],
+  hagaren:[
+    {id:"hg1",name:"高岡市（荒川弘先生の出身地）",work:"hagaren",pref:"富山",area:"富山県高岡市",desc:"ハガレンの作者・荒川弘先生の出身地。伝統的な金属工芸の街。",season:"通年",sc:"#fce4ec",st:"#880e4f",e:"⚗️",lat:36.754,lng:137.002,tag:"Takaoka Toyama Fullmetal",detail:{reason:"ハガレンの作者・荒川弘先生の出身地として知られる高岡市。伝統的な金属工芸の産地で、作品の世界観と通じるものがある。",tips:["⚗️ 高岡は伝統的な金属工芸の産地","🏯 高岡城址公園（古城公園）も見どころ","🦆 高岡大仏も人気観光スポット"],keywords:["鋼の錬金術師","荒川弘","高岡","富山","作者の故郷"]}},
+    {id:"hg2",name:"ポルトヨーロッパ（和歌山）",work:"hagaren",pref:"和歌山",area:"和歌山県和歌山市",desc:"実写映画のロケ地として使われたヨーロッパ風テーマパーク。アメストリスの街並みのモデル。",season:"通年",sc:"#fce4ec",st:"#880e4f",e:"🏰",lat:34.17,lng:135.17,tag:"Porto Europa Wakayama Fullmetal",detail:{reason:"実写映画「鋼の錬金術師」のロケ地として使用されたヨーロッパ風テーマパーク。中世ヨーロッパ風の街並みがアメストリスの世界観と合致している。",tips:["🎬 実写映画のロケ地として使用された","🏰 ヨーロッパの街並みが忠実に再現されている","🎡 テーマパークとしても楽しめる"],keywords:["鋼の錬金術師","ポルトヨーロッパ","実写映画","和歌山","アメストリス"]}},
+    {id:"hg3",name:"神戸フルーツ・フラワーパーク大沢",work:"hagaren",pref:"兵庫",area:"兵庫県神戸市北区",desc:"実写映画で東方司令部の拠点として登場したロケ地。クラシックな洋館が印象的。",season:"通年",sc:"#fce4ec",st:"#880e4f",e:"🌹",lat:34.92,lng:135.14,tag:"Kobe Fruit Flower Park Fullmetal",detail:{reason:"実写映画「鋼の錬金術師」で東方司令部の拠点として登場した施設。クラシックなヨーロッパ風建築が作品の世界観と合致している。",tips:["🎬 実写映画の撮影に使用されたロケ地","🌹 フルーツ・フラワーパークとして観光も楽しい","🚗 神戸市北区のドライブコースとして人気"],keywords:["鋼の錬金術師","実写映画","神戸","東方司令部","ロケ地"]}},
+  ],
+};
 
+let currentAnimeWork=null;
+const ALL_ANIME_SPOTS=Object.values(ANIME_SPOTS).flat();
+
+function renderAnimeHome(){
+  currentAnimeWork=null;
+  document.getElementById("back-btn").style.display="block";
+  const totalAnime=ALL_ANIME_SPOTS.length;
+  const doneAnime=ALL_ANIME_SPOTS.filter(s=>visited[s.id]).length;
+  let html=`<p class="hint">作品を選んで聖地を巡ろう</p><div class="pref-grid">`;
+  ANIME_WORKS.forEach(work=>{
+    const spots=ANIME_SPOTS[work.id]||[];
+    const done=spots.filter(s=>visited[s.id]).length;
+    const pct=spots.length?Math.round(done/spots.length*100):0;
+    html+=`<button class="pref-btn" onclick="renderAnimeWork('${work.id}')" style="border-color:${done===spots.length&&spots.length>0?'var(--color-primary)':''}">
+      <div class="pref-thumb" style="background:${work.color};font-size:36px;display:flex;align-items:center;justify-content:center">${work.icon}</div>
+      <div class="pref-body">
+        <div class="pref-name">${done===spots.length&&spots.length>0?"✨ ":""}${work.name}</div>
+        <div class="pref-count">${done}/${spots.length} 制覇</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>
+      </div>
+    </button>`;
+  });
+  html+=`</div>`;
+  document.getElementById("main").innerHTML=html;
+}
+
+function renderAnimeWork(workId){
+  currentAnimeWork=workId;
+  const work=ANIME_WORKS.find(w=>w.id===workId);
+  const spots=ANIME_SPOTS[workId]||[];
+  document.getElementById("app-title").textContent=work.icon+" "+work.name;
+  document.getElementById("back-btn").style.display="block";
+  let html=`<p class="hint" style="background:${work.color};padding:10px;border-radius:10px;margin-bottom:14px">${work.desc}</p><div class="spot-list">`;
+  spots.forEach(spot=>{
+    const isV=!!visited[spot.id],isW=!!wishlist[spot.id]&&!isV;
+    html+=`<div class="spot-card${isV?" visited":isW?" wishlist":""}" onclick="renderAnimeSpot('${spot.id}')">
+      <div id="card-img-${spot.id}" style="width:100%;height:140px;overflow:hidden;position:relative;background:${spot.sc};display:flex;align-items:center;justify-content:center;font-size:48px">
+        ${spot.e}
+        ${isV?'<div style="position:absolute;top:10px;right:10px;background:#7F77DD;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">✓ 制覇済み</div>':""}
+        ${isW?'<div style="position:absolute;top:10px;right:10px;background:#F59E0B;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">🌟 行きたい</div>':""}
+      </div>
+      <div class="spot-body">
+        <div class="spot-name-row"><span class="spot-name">${spot.name}</span></div>
+        <div class="spot-desc">${spot.desc}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="season-tag" style="background:${spot.sc};color:${spot.st}">🗓 ${spot.season}</span>
+          <span class="season-tag" style="background:#e3f2fd;color:#1565c0">📍 ${spot.pref}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  html+="</div>";
+  document.getElementById("main").innerHTML=html;
+  spots.forEach(async spot=>{
+    const url=await getPhoto(spot);
+    const el=document.getElementById("card-img-"+spot.id);
+    if(el&&url){
+      const isV=!!visited[spot.id],isW=!!wishlist[spot.id]&&!isV;
+      el.style.fontSize="0";
+      el.innerHTML=`<img src="${url}" style="width:100%;height:140px;object-fit:cover;display:block">
+        ${isV?'<div style="position:absolute;top:10px;right:10px;background:#7F77DD;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">✓ 制覇済み</div>':""}
+        ${isW?'<div style="position:absolute;top:10px;right:10px;background:#F59E0B;color:#fff;font-size:11px;padding:3px 10px;border-radius:10px">🌟 行きたい</div>':""}`;
+    }
+  });
+}
+
+function renderAnimeSpot(spotId){
+  const spot=ALL_ANIME_SPOTS.find(s=>s.id===spotId);
+  const work=ANIME_WORKS.find(w=>w.id===spot.work);
+  document.getElementById("app-title").textContent=spot.name;
+  document.getElementById("back-btn").style.display="block";
+  const isV=!!visited[spotId],isW=!!wishlist[spotId]&&!isV,memo=memos[spotId]||"";
+  const mapsUrl=`https://www.google.com/maps?q=${spot.lat},${spot.lng}`;
+  const igUrl=instaUrl(spot.tag);
+  const d=spot.detail;
+  const tipsHtml=d.tips.map(t=>`<div class="tip-item">${t}</div>`).join("");
+  const tagsHtml=d.keywords.map(k=>`<span class="keyword-tag">${k}</span>`).join("");
+  document.getElementById("main").innerHTML=`
+    <div id="hero-photo" style="width:100%;height:200px;border-radius:var(--radius);overflow:hidden;margin-bottom:14px;position:relative;background:${spot.sc};display:flex;align-items:center;justify-content:center;font-size:72px">
+      ${spot.e}
+      <div style="position:absolute;top:12px;left:12px;background:${work.color};color:#333;font-size:12px;padding:4px 12px;border-radius:20px;font-weight:600">${work.icon} ${work.name}</div>
+      <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px">📍 ${spot.area}</div>
+    </div>
+    <div class="action-links">
+      <a href="${mapsUrl}" target="_blank" class="action-link">🗺 <span>Googleマップ</span></a>
+      <a href="${igUrl}" target="_blank" class="action-link insta-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg>
+        <span>インスタで見る</span>
+      </a>
+    </div>
+    <div class="detail-card">
+      <div class="detail-name">${spot.name}</div>
+      <div class="detail-desc">${spot.desc}</div>
+      <span class="season-tag" style="background:${spot.sc};color:${spot.st};font-size:13px;padding:5px 16px">🗓 ${spot.season}がおすすめ</span>
+      <div class="more-section">
+        <button class="more-toggle" id="more-toggle" onclick="toggleMore()"><span>もっと見る</span> <span class="more-arrow">▼</span></button>
+        <div class="more-content" id="more-content"><div class="more-inner">
+          <div class="more-block"><div class="more-block-label">❤️ おすすめの理由</div><div class="more-block-text">${d.reason}</div></div>
+          <div class="more-block"><div class="more-block-label">💡 行く前に知っておきたいこと</div><div class="tips-list">${tipsHtml}</div></div>
+          <div class="more-block"><div class="more-block-label">🏷 キーワード</div><div class="tags-row">${tagsHtml}</div></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="action-btns">
+      <button class="wish-btn${isW&&!isV?" active":""}" onclick="toggleAnimeWish('${spotId}')" ${isV?"disabled":""}>
+        ${isW&&!isV?"🌟 行きたい！":"🌟 行きたい"}
+      </button>
+      <button class="seika-btn${isV?" done":""}" onclick="toggleAnimeVisited('${spotId}')">
+        ${isV?"✓ 制覇済み":"🏆 制覇した！"}
+      </button>
+    </div>
+    ${isV&&visited[spotId]&&visited[spotId].date?`<div class="visit-date">${visited[spotId].date} に制覇しました 🎉</div>`:""}
+    <div class="memo-card"><div class="memo-label">📝 メモ・感想</div><textarea id="memo-input" placeholder="聖地巡礼の感想を残そう...">${memo}</textarea></div>
+  `;
+  document.getElementById("memo-input").addEventListener("input",e=>{memos[spotId]=e.target.value;saveData();});
+  getPhoto(spot).then(url=>{
+    const el=document.getElementById("hero-photo");
+    if(el&&url){
+      el.innerHTML=`<img src="${url}" style="width:100%;height:200px;object-fit:cover;display:block">
+        <div style="position:absolute;top:12px;left:12px;background:${work.color};color:#333;font-size:12px;padding:4px 12px;border-radius:20px;font-weight:600">${work.icon} ${work.name}</div>
+        <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px">📍 ${spot.area}</div>`;
+    }
+  });
+}
+
+function toggleAnimeWish(spotId){
+  if(wishlist[spotId])delete wishlist[spotId];
+  else wishlist[spotId]=true;
+  saveData();renderAnimeSpot(spotId);
+}
+
+function toggleAnimeVisited(spotId){
+  if(visited[spotId])delete visited[spotId];
+  else{visited[spotId]={date:new Date().toLocaleDateString("ja-JP")};delete wishlist[spotId];}
+  saveData();renderAnimeSpot(spotId);
+}
 function renderPrefConquest(){
   const done=Object.keys(prefVisited).length;
   const pct=Math.round(done/47*100);
@@ -815,6 +1009,13 @@ document.getElementById("back-btn").addEventListener("click",()=>{
     updateProgress();
   } else if(view==="spot"){
     renderDetail(currentPref);
+    } else if(currentCategory==="anime"&&currentAnimeWork){
+    currentAnimeWork=null;
+    renderAnimeHome();
+    return;
+  } else if(currentCategory==="anime"){
+    renderHome();
+    return;
   } else if(view==="detail"){
     view="map";currentPref=null;
     document.getElementById("back-btn").style.display="none";
