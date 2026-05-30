@@ -648,6 +648,7 @@ function renderAnimeWork(workId){
 }
 
 function renderAnimeSpot(spotId){
+  view="spot";
   const spot=ALL_ANIME_SPOTS.find(s=>s.id===spotId);
   const work=ANIME_WORKS.find(w=>w.id===spot.work);
   document.getElementById("app-title").textContent=spot.name;
